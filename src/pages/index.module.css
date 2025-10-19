@@ -160,3 +160,57 @@ html[data-theme='light'] .githubButton:hover {
     /* Standard text color for cards */
     color: var(--ifm-font-color-secondary);
 }
+
+/* src/pages/index.module.css */
+
+/* ... (Keep all your existing styles above this line) ... */
+
+/* --- PyPI Link Styles --- */
+/* src/pages/index.module.css */
+
+/* ... (Keep all your existing styles above this line) ... */
+
+/* --- PyPI Link Styles --- */
+.pypiLinkContainer {
+  margin-top: 2.5rem; /* Slightly more space above */
+  margin-bottom: -1rem; /* Pull subsequent content slightly closer if needed */
+}
+
+.pypiLink {
+  display: inline-block; /* Allows padding and background */
+  padding: 0.5rem 1rem;
+  border-radius: 20px; /* Pill shape */
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  /* Use subtle background and text colors that adapt */
+  background-color: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-800);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  transition: all 0.2s ease;
+}
+
+/* Specific styling for the dark hero background in light mode */
+html[data-theme='light'] .pypiLink {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle transparent white */
+  color: var(--ifm-color-gray-300);
+  border-color: var(--ifm-color-gray-500);
+}
+
+
+.pypiLink:hover {
+  /* Use primary colors on hover for emphasis */
+  background-color: var(--ifm-color-primary-lighter);
+  color: var(--ifm-color-primary-darkest);
+  border-color: var(--ifm-color-primary-light);
+  text-decoration: none; /* Keep underline off */
+  transform: translateY(-1px); /* Subtle lift effect */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Specific hover for light mode's dark hero */
+html[data-theme='light'] .pypiLink:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: var(--ifm-color-gray-100);
+}

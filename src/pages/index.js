@@ -27,6 +27,19 @@ function HomepageHeader() {
             View on GitHub <span aria-label="star" role="img">⭐</span>
           </Link>
         </div>
+
+        <p className={styles.pypiLinkContainer}>
+          <Link
+            href="https://pypi.org/project/yourdb/" // <-- Your PyPI Link
+            target="_blank" // Open in new tab
+            rel="noopener noreferrer" // Security best practice
+            className={styles.pypiLink}
+          >
+            📦 Available on PyPI
+          </Link>
+          {/* You can add a version badge here later if you want */}
+        </p>
+        
       </div>
     </header>
   );
