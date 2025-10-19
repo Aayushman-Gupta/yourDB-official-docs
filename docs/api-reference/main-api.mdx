@@ -1,0 +1,107 @@
+---
+title: Main API (YourDB Class)
+sidebar_label: YourDB Class
+---
+
+# API Reference: YourDB Class
+
+The `YourDB` class is the main entry point for interacting with your database. It manages entities (collections of objects) and provides methods for CRUD operations and database management.
+
+```python
+from yourdb import YourDB
+```
+
+## Initialization
+```python
+db = YourDB(db_name: str)
+```
+
+Creates or connects to a database instance.
+
+-   **db_name (str)**: The name of the database. This determines the folder name used for storage (e.g., my_app_db.yourdb).
+
+-   **Behavior**: If the database directory exists, it loads existing entities and their schemas. If not, it creates the directory.
+
+---
+
+##  Entity Management
+`create entity`
+
+```python
+db.create_entity(entity_name: str, entity_schema: dict) -> bool
+```
+
+Creates a new entity (similar to a table or collection) within the database.
+
+-   `entity_name` (str): The name for the new entity (alphanumeric and underscores, cannot start with a number).
+
+-   `entity_schema` (dict): A dictionary defining the structure and types of objects stored in this entity. Must include:
+
+-   '`primary_key'` (str): The name of the attribute serving as the unique identifier.
+
+-   Attribute names mapped to type strings (e.g., `"int"`, `"str"`, `"bool"`, `"float"`, or the name of a `@register_class`-decorated class).
+
+-   `'indexes'`: (Optional list of str) A list of attribute names to create indexes on for faster lookups.
+
+-   Returns: `True` on success.
+
+-   Raises: `Exception` if the entity name is invalid, the schema is invalid, or the entity already exists.
+
+
+`drop entity`
+```python
+db.drop_entity(entity_name: str) -> bool
+```
+
+Permanently deletes an entity and all its associated data files. Use with caution!
+
+-   `entity_name` (str): The name of the entity to delete.
+
+-   **Returns**: `True` on success.
+
+-   **Raises**: `Exception` if the entity does not exist.
+
+---
+##  Data Operations
+
+`insert_into`
+
+```python
+db.insert_into(entity_name: str, entity_object: object) -> bool
+```
+
+Inserts a new object record into the specified entity.
+
+-   `entity_name` (str): The name of the target entity.
+
+-   `entity_object` (object): An instance of a Python class (usually decorated with `@register_class`) whose attributes match the entity's schema. The primary key attribute must be set before calling insert.
+
+-  ** Returns**: `True` on success.
+
+-   **Raises** : `Exception` if the entity doesn't exist, the object fails schema validation (e.g., wrong type, missing primary key), or the primary key already exists.
+
+
+`select_from`
+
+```python
+db.select_from(entity_name: str, filter_dict: dict = None) -> list[object]
+```
+
+Retrieves a list of objects from an entity that match the specified filter.
+
+-   `entity_name` (str): The name of the entity to query.
+
+-   `filter_dict` (Optional dict): A dictionary specifying the query conditions.
+
+    -   Keys are attribute names.
+
+    -   Values are either the exact value to match or a nested dictionary with operators (`$gt`, `$lt`, `$ne`, etc.). [See Advanced Queries](/docs/tutorials/advanced-queries).
+
+    -   If `None` or omitted, returns all objects in the entity.
+
+**Returns**: A list of reconstructed Python objects matching the filter. Returns an empty list if no matches are found.
+
+**Raises**: `Exception` if the entity does not exist.
+
+`update_entity`
+
