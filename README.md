@@ -1,41 +1,18 @@
-# Website
+# YourDB Documentation
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
 
-## Installation
+## 🚀 Getting Started Locally
 
-```bash
-yarn
-```
+To run this documentation site on your local machine:
 
-## Local Development
+### 1. Prerequisites
 
-```bash
-yarn start
-```
+* **Node.js**: Version 20.0 or higher is required. You can check your version with `node -v`. We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
+* **npm** (comes with Node.js) or **Yarn**: Used for managing dependencies.
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-## Build
+### 2. Clone the Repository
 
 ```bash
-yarn build
+git clone https://github.com/Aayushman-Gupta/yourDB-official-docs
 ```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-## Deployment
-
-Using SSH:
-
-```bash
-USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
