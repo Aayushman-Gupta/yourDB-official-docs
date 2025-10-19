@@ -1,0 +1,74 @@
+---
+title: Entity Class
+sidebar_label: Entity Class
+---
+
+# API Reference: Entity Class
+
+The `Entity` class (`yourdb/entity.py`) represents a single collection of objects within the database (analogous to a table or collection). It manages the in-memory cache, indexes, log files, and concurrency control for its specific set of data.
+
+You typically don't interact with this class directly; the `YourDB` class acts as the public interface. However, understanding its role is helpful for comprehending `yourdb`'s internals.
+
+## Key Responsibilities
+
+* **In-Memory Cache (`self.data`):** Holds the latest state of all objects for fast reads. It's a dictionary mapping primary keys to object instances.
+* **Indexes (`self.indexes`):** In-memory dictionaries mapping indexed field values to sets of primary keys for fast lookups.
+* **Log File Management (`self.file_paths`):** Knows the location of the partitioned log files where its data is persisted.
+* **Write Operations:** Handles appending `INSERT`, `UPDATE`, `DELETE` records to the correct log file partition.
+* **Data Loading (`_load_from_logs`, `_replay_partition`):** Reads log files on startup to build the in-memory cache and indexes.
+* **Concurrency (`self.lock`):** Each `Entity` has its own `RWLock` to ensure thread-safe access.
+* **Schema Validation (`is_valid_entity`):** Validates objects against the schema before insertion.
+* **Compaction Triggering:** Tracks write counts and triggers the `Compactor` when necessary.
+
+## Core Methods (Internal Logic for `YourDB` methods)
+
+### `insert(entity_object)`
+
+* Acquires write lock.
+* Validates the object against the schema (`is_valid_entity`).
+* Determines the correct partition using `hash_partition`.
+* Creates a log entry (including timestamp).
+* Appends the entry to the log file.
+* Updates the in-memory cache (`self.data`), primary key set (`self.primary_key_set`), and indexes (`self.indexes`).
+* Increments write count and checks if compaction is needed.
+* Releases write lock.
+
+### `get_data(filter_dict)`
+
+* Acquires read lock.
+* Calls the internal, non-locking `_get_data_unlocked`.
+* Releases read lock.
+
+### `_get_data_unlocked(filter_dict)`
+
+* (Assumes a lock is already held by the caller if necessary).
+* Analyzes the `filter_dict` to see if indexes can be used.
+* **Indexed Path:** If an indexed field is used for equality, retrieves candidate primary keys directly from `self.indexes`. Looks up these candidates in `self.data`.
+* **Full Scan Path:** If no suitable index exists, or for range queries on the current index implementation, iterates through all objects in `self.data`.
+* Applies the full `filter_dict` conditions (`_matches_filter`) to the candidates or scanned objects.
+* Returns the list of matching objects.
+
+### `update(filter_dict, update_fn)`
+
+* Acquires write lock.
+* Calls `_get_data_unlocked` to find matching objects.
+* For each matching object:
+    * Stores old values of indexed fields.
+    * Calls the `update_fn` to modify the object.
+    * Updates `self.indexes` if any indexed fields changed.
+    * Creates a minimal log entry containing only the changed fields (and timestamp).
+    * Appends the entry to the log file.
+    * Increments write count and checks compaction.
+* Releases write lock.
+
+### `delete(filter_dict)`
+
+* Acquires write lock.
+* Calls `_get_data_unlocked` to find matching objects.
+* For each matching object:
+    * Removes the object's primary key from all relevant entries in `self.indexes`.
+    * Creates a `DELETE` log entry (including timestamp).
+    * Appends the entry to the log file.
+    * Removes the object from the in-memory cache (`self.data`) and primary key set (`self.primary_key_set`).
+    * Increments write count and checks compaction.
+* Releases write lock.

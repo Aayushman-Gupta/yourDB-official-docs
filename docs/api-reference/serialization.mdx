@@ -1,0 +1,106 @@
+---
+title: Serialization & Schema Evolution API
+sidebar_label: Serialization API
+---
+
+# API Reference: Serialization & Schema Evolution
+
+The `yourdb/utils.py` file contains the core logic for serializing custom Python objects, deserializing them, and handling schema evolution automatically.
+
+## Decorators
+
+These decorators are used in your application code to integrate your data models with `yourdb`.
+
+### `@register_class`
+
+```python
+from yourdb.utils import register_class
+
+@register_class
+class MyDataModel:
+    __version__ = 1 # Optional, defaults to 1
+    # ... attributes and methods ...
+```
+
+
+-   Purpose: Registers a class with yourdb's serialization and schema evolution system. This is required for any custom class you want to store directly in the database.
+
+-   Versioning: The decorator automatically reads the __version__ = X class attribute. If omitted, the version defaults to 1. This version number is stored with the object data in the log file.
+
+-   Effect: Allows the YourDBEncoder to serialize instances of this class and the yourdb_decoder to reconstruct them and apply upgrades.
+
+```python
+from yourdb.utils import register_upgrade
+
+@register_upgrade(class_name: str, from_version: int, to_version: int)
+def my_upgrade_function(old_data_dict: dict) -> dict:
+    # ... logic to transform old_data_dict ...
+    return new_data_dict
+```
+
+
+-   Purpose: Registers a function that knows how to upgrade the data of a specific class from one version to the immediate next version.
+
+**Arguments**:
+
+    -   class_name (str): The name of the class this upgrader applies to (must match the class name registered with @register_class).
+
+    -   from_version (int): The version the input data dictionary represents.
+
+    -   to_version (int): The version the output data dictionary should represent (must be from_version + 1).
+
+**Function Signature**: The decorated function must:
+
+    -   Accept one argument: a dictionary (old_data_dict) representing the __data__ part of the object from the from_version.
+
+    -   Return one argument: a dictionary (new_data_dict) representing the __data__ part for the to_version.
+
+**Effect**: Allows the yourdb_decoder to automatically find and apply this function during lazy reads or eager migrations when it encounters data from from_version.
+
+---
+
+##  Core Components (Internal)
+These classes and functions are used internally by `yourdb` but are useful to understand.
+
+`YourDBEncode`r (Class)
+-   A custom `json.JSONEncoder` subclass.
+
+-  **Purpose**: Handles the serialization of registered custom objects into a specific JSON format.
+
+-   **Output Format**: When it encounters an instance of a registered class (`obj`), it outputs a dictionary like this:
+
+```JSON
+{
+    "__class__": "ClassName",
+    "__version__": 1, // Version from obj.__version__ or default
+    "__data__": { ... obj.__dict__ ... }
+}
+```
+-   For standard Python types (int, str, list, dict), it uses the default JSON encoding.
+
+`yourdb_decoder` (Function)
+A custom object_hook function used with json.loads.
+
+Purpose: Handles the deserialization of JSON data back into Python objects, including applying schema evolution upgrades.
+
+### Logic:
+
+    -   Looks for the "__class__" key in the incoming dictionary.
+
+    -   If found, identifies the registered class and its latest version from _CLASS_REGISTRY.
+
+    -   Checks the "__version__" from the JSON data (defaults to 1 if missing).
+
+    -   If stored_version < latest_version:
+
+        -   Enters a loop, finding and applying the necessary @register_upgrade functions (v1->v2, v2->v3, etc.) in sequence to the "__data__" dictionary until it reaches the latest_version.
+
+        -   Raises an error if a required upgrade function is missing.
+
+    -   Creates a new, empty instance of the latest class version (cls.__new__(cls)).
+
+    -   Populates the instance's __dict__ with the (now fully upgraded) data.
+
+    -   Returns the reconstructed Python object.
+
+    -   If "__class__" is not found, returns the dictionary as is.

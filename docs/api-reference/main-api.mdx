@@ -105,3 +105,51 @@ Retrieves a list of objects from an entity that match the specified filter.
 
 `update_entity`
 
+```python
+db.update_entity(entity_name: str, filter_dict: dict, update_fn: callable) -> None
+```
+
+Finds objects matching the filter_dict and applies the update_fn to modify them.
+
+-   `entity_name` (str): The name of the entity to update.
+
+-   `filter_dict` (dict): A query dictionary (like in select_from) to identify the object(s) to update.
+
+-   `update_fn` (callable): A function or lambda that accepts a single argument (the retrieved object) and modifies its attributes directly in-place. The function must return the modified object.
+
+-   **Returns**: `None`.
+-    **Raises**: `Exception` if the entity does not exist.
+
+
+`delete_from`
+
+```python
+db.delete_from(entity_name: str, filter_dict: dict) -> None
+```
+
+Deletes objects from an entity that match the specified filter.
+
+-   `entity_name` (str): The name of the entity to delete from.
+
+-   `filter_dict` (dict): A query dictionary (like in select_from) to identify the object(s) to delete.
+
+-   **Returns**: `None`.
+
+-   **Raises**: `Exception` if the entity does not exist.
+
+---
+##  Optimization
+
+`optimize_entity`
+
+```python
+db.optimize_entity(entity_name: str) -> bool
+```
+
+Performs an eager migration (compaction with schema upgrades) on the specified entity. Reads all data, upgrades it to the latest schema version, and writes new, clean log files containing only the latest data. This is a safe, atomic operation.
+
+-   `entity_name` (str): The name of the entity to optimize.
+
+-   **Returns**: `True` on success, False if the optimization failed (the original data remains untouched).
+
+-   **Raises**: `Exception` if the entity does not exist.
