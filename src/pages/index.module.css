@@ -1,23 +1,162 @@
 /**
- * CSS files with the .module.css suffix will be treated as CSS modules
- * and scoped locally.
+ * CSS for the homepage - Blue, White, Dark theme with light/dark mode support.
  */
 
+/* --- Hero Section --- */
 .heroBanner {
   padding: 4rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
+  /* Use a dark variable for dark mode, light variable for light mode */
+  background-color: var(--ifm-background-surface-color);
+  border-bottom: 1px solid var(--ifm-color-emphasis-300); /* Subtle separator */
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+/* Light mode specific override if needed */
+html[data-theme='light'] .heroBanner {
+   background-color: #23272f; /* Dark background even in light mode for contrast */
+   color: var(--ifm-color-gray-100); /* Light text on dark background */
 }
+/* Dark mode specific override */
+html[data-theme='dark'] .heroBanner {
+   background-color: #1a1a1c; /* Keep it dark */
+   color: var(--ifm-color-gray-100);
+}
+
+
+.heroLogo {
+    max-width: 100px;
+    margin-bottom: 1rem;
+}
+
+/* Title uses default text color which adapts */
+
+.heroSubtitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    /* Use a specific blue - adjust hex code if needed */
+    color: #25c2a0; /* Your logo's teal/blue color */
+    margin-bottom: 0.5rem;
+}
+
+.heroTagline {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    /* Use a subtle gray text color variable */
+    color: var(--ifm-color-secondary-darkest);
+}
+
+html[data-theme='light'] .heroTagline {
+    color: var(--ifm-color-gray-300); /* Lighter gray for dark hero bg */
+}
+
 
 .buttons {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* GitHub Button - keeping it subtle but visible */
+.githubButton {
+    /* Use variables for text and border that work in both modes */
+    color: var(--ifm-font-color-secondary); /* Standard secondary text color */
+    border-color: var(--ifm-color-emphasis-400);
+}
+html[data-theme='light'] .githubButton {
+    color: var(--ifm-color-gray-800); /* Darker text for light backgrounds */
+    border-color: var(--ifm-color-gray-700);
+    background-color: var(--ifm-color-gray-100);
+    transition: all 0.2s ease-in-out;
+}
+
+
+.githubButton:hover {
+    background-color: var(--ifm-color-emphasis-100);
+    color: var(--ifm-font-color-base); /* Ensure text stays readable */
+    border-color: var(--ifm-color-emphasis-600);
+}
+html[data-theme='light'] .githubButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: var(--ifm-color-gray-300);
+}
+
+
+/* --- Features Section --- */
+.features {
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  width: 100%;
+  /* Use subtle background variable - usually light gray/off-white */
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+.features h3 {
+    margin-bottom: 1rem;
+    /* Use a strong blue from the theme */
+    color: var(--ifm-color-primary-dark);
+}
+
+/* --- Why YourDB Section --- */
+.whySection {
+    padding: 4rem 0;
+    width: 100%;
+    /* Main page background */
+    background-color: var(--ifm-background-color);
+}
+
+.whySection h2 {
+    /* Standard heading color */
+    color: var(--ifm-heading-color);
+}
+
+.whySection h4 {
+    /* A darker blue */
+    color: var(--ifm-color-primary-darker);
+    margin-top: 1.5rem;
+}
+
+.whySection p {
+     /* Standard paragraph color */
+    color: var(--ifm-font-color-secondary);
+}
+
+
+/* --- Use Cases Section --- */
+.useCasesSection {
+    padding: 4rem 0;
+    /* Match features background */
+    background-color: var(--ifm-color-emphasis-100);
+}
+
+.useCasesSection h2 {
+    color: var(--ifm-heading-color);
+}
+
+.useCaseList {
+    list-style: none;
+    padding-left: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.useCaseList li {
+    /* Use card background variable */
+    background-color: var(--ifm-card-background-color);
+    padding: 1.5rem 1rem;
+    border-radius: var(--ifm-card-border-radius);
+    /* Use card shadow variable */
+    box-shadow: var(--ifm-card-box-shadow);
+    text-align: center;
+    font-weight: 500;
+    border: 1px solid var(--ifm-color-emphasis-300); /* Subtle border */
+    /* Standard text color for cards */
+    color: var(--ifm-font-color-secondary);
 }

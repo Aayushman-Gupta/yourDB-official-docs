@@ -9,7 +9,7 @@ const config = {
   // --- END FIX ---
 
   tagline: 'The Intelligent Python Database',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/yourdb.ico',
 
   // Set the production/development organization and project names
   organizationName: 'your-github-username', // Your GitHub username
@@ -46,7 +46,7 @@ const config = {
         title: 'yourdb',
         logo: {
           alt: 'yourdb Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {

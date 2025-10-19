@@ -7,12 +7,15 @@ sidebar_label: Compaction API
 
 The `Compactor` class (`yourdb/compaction.py`) is responsible for cleaning up and rewriting individual log file partitions. It's triggered automatically by the `Entity` class when a write threshold is met.
 
+---
+
 ## Purpose
 
 * Reduce disk space usage by removing obsolete log entries.
 * Speed up database load times by creating shorter log files.
 * (With Smart Compaction) Preserve historical data needed for Time-Travel Queries.
 
+---
 ## Standard Compaction
 
 The basic compaction process (before Time-Travel):
@@ -22,6 +25,7 @@ The basic compaction process (before Time-Travel):
 3.  Writes a new temporary file containing only `INSERT` operations for the final states.
 4.  Atomically replaces the old log file with the new temporary file.
 
+---
 ## Smart Compaction (for Time-Travel)
 
 The enhanced compaction process used when Time-Travel is enabled:
@@ -31,6 +35,7 @@ The enhanced compaction process used when Time-Travel is enabled:
 3.  Writes a new temporary file containing `INSERT` operations for the final state *and* all preserved historical snapshots.
 4.  Atomically replaces the old log file.
 
+---
 ## Key Method
 
 ### `compact()`
@@ -38,3 +43,8 @@ The enhanced compaction process used when Time-Travel is enabled:
 ```python
 compactor = Compactor(log_file_path, primary_key, retention_days)
 success = compactor.compact()
+```
+
+**Initialization**: Takes the path to the log file, the entity's primary key field name, and the number of days of history to retain (used by smart compaction).
+
+`compact`(): Executes the compaction process described above. Returns True on success, False on failure (e.g., I/O error). The atomic swap ensures the original file remains intact on failure.
