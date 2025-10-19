@@ -1,0 +1,131 @@
+---
+title: Advanced Queries
+sidebar_label: Advanced Queries
+---
+
+# Advanced Queries
+
+`yourdb` supports more complex queries beyond simple equality checks using MongoDB-style operators within the `filter_dict`. This allows you to filter based on ranges, inequalities, and multiple conditions.
+
+## Query Operators
+
+The following operators can be used inside a nested dictionary as the value in your `filter_dict`:
+
+* `$gt`: Greater than
+* `$lt`: Less than
+* `$gte`: Greater than or equal to
+* `$lte`: Less than or equal to
+* `$ne`: Not equal to
+* `$eq`: Equal to (this is the default if no operator is specified)
+
+
+## Setup
+
+We'll continue with the `Product` example from the Basic CRUD tutorial. Assume the database contains these items:
+
+```python
+# Assumed data in the 'products' entity:
+# Product(id=101, name='Laptop Pro', price=$1500, cat='Electronics')
+# Product(id=103, name='Standing Desk', price=$500, cat='Furniture') # Price updated earlier
+# Product(id=104, name='Monitor', price=$300, cat='Electronics') # Added for more examples
+# Product(id=105, name='Office Chair', price=$250, cat='Furniture') # Added for more examples
+
+```
+Make sure the price field is included in the schema's indexes list for optimal performance on range queries (though the current implementation might still scan; see Core Concepts > Architecture).
+
+```python
+
+    # Ensure 'price' is indexed in your schema definition
+product_schema = {
+    # ... other fields ...
+    'price': "int",
+    'category': "str",
+    'indexes': ['category', 'price'] # <-- 'price' added
+}
+
+```
+### Examples
+**Range Queries ($gt, $lte)**
+
+Find products within a specific price range.
+
+```python
+from yourdb import YourDB
+
+db = YourDB("inventory_db") # Connect to the existing DB
+
+# Find products costing more than $400
+print("--- Products > $400 ---")
+expensive_items = db.select_from("products", {'price': {'$gt': 400}})
+for item in expensive_items:
+    print(item)
+# Expected: Laptop Pro ($1500), Standing Desk ($500)
+
+# Find products costing $300 or less
+print("\n--- Products <= $300 ---")
+affordable_items = db.select_from("products", {'price': {'$lte': 300}})
+for item in affordable_items:
+    print(item)
+# Expected: Monitor ($300), Office Chair ($250)
+
+```
+
+---
+
+**Inequality Query ($ne)**
+
+Find products that are not in a specific category.
+
+
+```python
+# Find products that are NOT 'Electronics'
+print("\n--- Non-Electronics Products ---")
+others = db.select_from("products", {'category': {'$ne': 'Electronics'}})
+for item in others:
+    print(item)
+# Expected: Standing Desk (Furniture), Office Chair (Furniture)
+```
+
+---
+
+**Combining Operators on the Same Field**
+
+Find products within a specific price band.
+
+```python
+# Find products between $300 and $600 (inclusive)
+print("\n--- Products between $300 and $600 ---")
+mid_range = db.select_from("products", {
+    'price': {'$gte': 300, '$lte': 600}
+})
+for item in mid_range:
+    print(item)
+# Expected: Standing Desk ($500), Monitor ($300)
+```
+
+## Combining Multiple Fields
+
+Find products matching criteria across different attributes. yourdb currently uses AND logic – all conditions in the filter_dict must be met.
+
+```python
+# Find Furniture that costs less than $300
+print("\n--- Furniture < $300 ---")
+cheap_furniture = db.select_from("products", {
+    'category': 'Furniture', # Equality check (uses index if available)
+    'price': {'$lt': 300}    # Range check
+})
+for item in cheap_furniture:
+    print(item)
+# Expected: Office Chair ($250)
+
+# Find Electronics that do NOT cost $1500
+print("\n--- Electronics not costing $1500 ---")
+other_electronics = db.select_from("products", {
+    'category': 'Electronics',
+    'price': {'$ne': 1500}
+})
+for item in other_electronics:
+    print(item)
+# Expected: Monitor ($300)
+```
+

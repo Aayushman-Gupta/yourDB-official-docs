@@ -42,3 +42,111 @@ product_schema = {
 
 # 4. Create the entity (like a table)
 db.create_entity("products", product_schema)
+
+```
+
+### Create (Insert)
+
+To add new records, use the `insert_into()` method. You pass the entity name and the Python object you want to store. Remember to set the primary key ( `product_id`  in this case) before inserting.
+
+```python
+
+# Create product objects
+laptop = Product(name="Laptop Pro", price=1500, category="Electronics")
+laptop.product_id = 101 # Set the primary key
+
+keyboard = Product(name="Mechanical Keyboard", price=120, category="Accessories")
+keyboard.product_id = 102
+
+desk = Product(name="Standing Desk", price=450, category="Furniture")
+desk.product_id = 103
+
+# Insert them into the database
+db.insert_into("products", laptop)
+db.insert_into("products", keyboard)
+db.insert_into("products", desk)
+
+print("Inserted 3 products.")
+
+```
+
+### Read (Select)
+To retrieve data, use the `select_from()` method.
+
+*   Calling it with just the entity name fetches all records.
+*   Providing a `filter_dict` allows you to query specific records based on their attributes.
+
+```python
+
+# Read all products
+print("--- All Products ---")
+all_products = db.select_from("products")
+for p in all_products:
+    print(p)
+
+# Read only products in the 'Electronics' category (uses the index)
+print("\n--- Electronics Products ---")
+electronics = db.select_from("products", {'category': 'Electronics'})
+for p in electronics:
+    print(p)
+
+# Read a specific product by its primary key
+print("\n--- Specific Product (ID 103) ---")
+specific_product = db.select_from("products", {'product_id': 103})
+if specific_product:
+    print(specific_product[0])
+else:
+    print("Product not found.")
+
+```
+
+### Update
+To modify existing records, use the update_entity() method. It requires:
+
+- The **entity name**.
+
+- A **filter_dict** to identify which record(s) to update.
+
+- An **update_fn** (a function or lambda) that takes the object found by the filter and modifies it directly.
+
+```python
+
+    # Let's increase the price of the Standing Desk (ID 103)
+
+        print("\n--- Updating Product Price ---")
+
+        def increase_price(product_obj):
+            product_obj.price += 50 # Modify the object directly
+            print(f"Updated price for {product_obj.name} to ${product_obj.price}")
+            return product_obj # Important: return the modified object
+
+        db.update_entity(
+            "products",
+            {'product_id': 103}, # Filter: Find the desk
+            increase_price         # Update function: Apply the price increase
+        )
+
+        # Verify the update
+        updated_desk = db.select_from("products", {'product_id': 103})[0]
+        print(f"Verified new price: ${updated_desk.price}")
+
+```
+
+### Delete
+To remove records, use the `delete_from()` method. It takes the **entity name** and a **filter_dict** to specify which records to delete.
+
+```python
+
+    # Let's delete the keyboard (ID 102)
+
+    print("\n--- Deleting Product ---")
+    db.delete_from("products", {'product_id': 102})
+    print("Deleted product with ID 102.")
+
+    # Verify deletion
+    remaining_products = db.select_from("products")
+    print("\n--- Remaining Products ---")
+    for p in remaining_products:
+        print(p)
+
+```
