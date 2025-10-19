@@ -1,0 +1,165 @@
+---
+title: Schema Evolution in Practice
+sidebar_label: Schema Evolution
+---
+
+# Schema Evolution in Practice
+
+One of `yourdb`'s most powerful features is its ability to handle changes to your data classes over time without requiring complex database migration scripts. This tutorial demonstrates how to manage these changes using the **Hybrid Schema Evolution** model.
+
+## The Scenario
+
+Imagine you start with a simple `User` class (v1) and later decide to add an optional `middle_name` (v2), and finally refactor `name` into `first_name` and `last_name` (v3).
+
+## ERA 1: The Beginning (v1)
+
+Your initial application code defines `User` v1.
+
+```python
+# --- Your application code in ERA 1 ---
+from yourdb.utils import register_class
+from yourdb import YourDB
+
+@register_class
+class User:
+    __version__ = 1 # Define the version
+    def __init__(self, name):
+        self.user_id = None
+        self.name = name
+    def __repr__(self):
+        return f"User(v{self.__version__}, id={self.user_id}, name='{self.name}')"
+
+# Setup the database
+db = YourDB("my_app_v1")
+db.create_entity("users", {'primary_key': 'user_id', 'user_id': "int", 'name': "str"})
+
+# Store some v1 users
+alice = User("Alice Smith"); alice.user_id = 101; db.insert_into("users", alice)
+bob = User("Bob Johnson"); bob.user_id = 102; db.insert_into("users", bob)
+
+print("ERA 1: Stored v1 users.")
+# End of ERA 1 simulation
+```
+
+##  ERA 2: Adding a Field (v2)
+You decide to add an optional middle_name.
+
+-   **Step 1**: Define the Upgrader Function Create a function that teaches yourdb how to convert a v1 data dictionary into a v2 data dictionary. Use the @register_upgrade decorator.
+
+``` python
+# --- Somewhere accessible in your app (e.g., models/user_upgrades.py) ---
+from yourdb.utils import register_upgrade
+
+@register_upgrade("User", from_version=1, to_version=2)
+def upgrade_user_v1_to_v2(old_data_dict):
+    """Adds a 'middle_name' field with a default None value."""
+    old_data_dict["middle_name"] = None # Add the new field
+    return old_data_dict
+```
+
+-   **Step 2**: Update Your Class Definition Change your User class to v2, including the new field and updating __version__.
+
+```python
+# --- Your application code in ERA 2 ---
+from yourdb.utils import register_class # register_upgrade is likely imported elsewhere
+
+@register_class
+class User:
+    __version__ = 2 # Bump the version
+    def __init__(self, name, middle_name=None): # Add the new field
+        self.user_id = None
+        self.name = name
+        self.middle_name = middle_name
+    def __repr__(self):
+        middle = f", middle='{self.middle_name}'" if self.middle_name is not None else ""
+        return f"User(v{self.__version__}, id={self.user_id}, name='{self.name}'{middle})"
+
+# --- Using the v2 code ---
+from yourdb import YourDB
+
+db_v2 = YourDB("my_app_v1") # Connect to the same database
+
+# Read existing users - Lazy Read in action!
+print("ERA 2: Reading users...")
+all_users_v2 = sorted(db_v2.select_from("users"), key=lambda u: u.user_id)
+for user in all_users_v2:
+    print(f"   -> {user}")
+# Output will show Alice and Bob as v2 objects, with middle_name=None,
+# because the v1->v2 upgrader ran automatically on read.
+
+# Update Bob to add a real middle name
+print("\nUpdating Bob...")
+db_v2.update_entity("users", {'user_id': 102}, lambda u: setattr(u, 'middle_name', 'Danger') or u)
+
+# Add a new user who starts as v2
+charlie = User("Charlie Brown", "Noel"); charlie.user_id = 103; db_v2.insert_into("users", charlie)
+print("Added Charlie as v2.")
+```
+
+Now, your log files contain a mix: Alice is still v1, but Bob and Charlie's latest states are stored as v2. However, your application only ever sees v2 objects thanks to the lazy read.
+
+
+##  ERA 3: Refactoring Fields (v3)
+You decide to split name into first_name and last_name.
+-   **Step 1**: Define the v2 -> v3 Upgrader
+
+```python
+# --- Add this to your upgrades file ---
+@register_upgrade("User", from_version=2, to_version=3)
+def upgrade_user_v2_to_v3(old_data_dict):
+    """Splits 'name' into 'first_name' and 'last_name'."""
+    full_name = old_data_dict.pop("name", "")
+    parts = full_name.split(" ", 1)
+    # Return the data dictionary for the *new* v3 class structure
+    return {
+        "user_id": old_data_dict["user_id"],
+        "first_name": parts[0] if parts else "",
+        "last_name": parts[1] if len(parts) > 1 else "",
+        "middle_name": old_data_dict.get("middle_name") # Preserve middle name
+    }
+```
+
+-   **Step 2**: Update Your Class Definition
+
+```python
+# --- Your application code in ERA 3 ---
+from yourdb.utils import register_class
+
+@register_class
+class User:
+    __version__ = 3 # Bump the version again
+    def __init__(self, first_name, last_name, middle_name=None): # New signature
+        self.user_id = None
+        self.first_name = first_name
+        self.last_name = last_name
+        self.middle_name = middle_name
+    def __repr__(self):
+        middle = f", middle='{self.middle_name}'" if self.middle_name else ""
+        return f"User(v{self.__version__}, id={self.user_id}, first='{self.first_name}', last='{self.last_name}'{middle})"
+
+# --- Using the v3 code ---
+from yourdb import YourDB
+
+db_v3 = YourDB("my_app_v1") # Still the same database
+
+print("\nERA 3: Reading users...")
+all_users_v3 = sorted(db_v3.select_from("users"), key=lambda u: u.user_id)
+for user in all_users_v3:
+    print(f"   -> {user}")
+# Output now shows ALL users as v3 objects, correctly transformed!
+# Alice (v1 disk) -> upgraded v1->v2 -> upgraded v2->v3
+# Bob (v2 disk) -> upgraded v2->v3
+# Charlie (v2 disk) -> upgraded v2->v3
+```
+This demonstrates the power of lazy reads. Your application code only needs to know about the latest User v3 class, and yourdb handles translating all historical data automatically.
+
+##  Optional: Eager Migration
+**If, after some time, you want to clean up the log files to contain only v3 objects (perhaps for performance), you can run the eager migration tool:**
+
+```python
+print("\n--- Running Eager Migration (Optimization) ---")
+# Make sure your current code defines the LATEST (v3) User class
+# and ALL upgraders (v1->v2, v2->v3) are registered.
+db_v3.optimize_entity("users")
+print("Optimization complete. Log files now contain only v3 data.")
+```

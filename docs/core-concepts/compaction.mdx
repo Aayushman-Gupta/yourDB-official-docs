@@ -1,0 +1,46 @@
+---
+title: Compaction
+sidebar_label: Compaction
+---
+
+# Compaction
+
+`yourdb` uses an append-only log for storing data. While this provides fast writes and durability, the log files grow over time and accumulate redundant data (e.g., previous versions of updated records, records for deleted items). **Compaction** is the process of cleaning up these log files.
+
+## Why Compaction is Necessary
+
+* **Storage Efficiency:** Removes outdated and deleted data, preventing log files from growing indefinitely.
+* **Faster Startup/Reloads:** Shorter, cleaner log files mean less data needs to be read and processed when an `Entity` is loaded into memory, significantly speeding up application startup times.
+
+## How Standard Compaction Works (Simplified)
+
+The basic idea behind standard compaction is to determine the *final state* of each object in a log file segment and discard all the intermediate history.
+
+1.  **Read Log Segment:** The compactor reads a specific log file (e.g., `users_shard_0.log`).
+2.  **Replay History:** It processes all `INSERT`, `UPDATE`, and `DELETE` operations in order, just like the database does on startup, but only for the data in that specific file.
+3.  **Calculate Final State:** It builds an in-memory map of the primary keys to their final, most up-to-date object state.
+4.  **Write New Log:** It writes a brand new, clean log file containing only `INSERT` operations for the objects that still exist in their final state.
+5.  **Atomic Swap:** It uses `os.replace()` to atomically swap the old, messy log file with the new, clean one. This ensures that even if the process crashes during the swap, either the old or the new file remains intact, preventing data loss.
+
+*Example:*
+* **Before:** `INSERT(A, v1)`, `UPDATE(A, v2)`, `DELETE(B)`
+* **After:** `INSERT(A, v2)`
+
+## Smart Compaction (for Time-Travel)
+
+When the **Time-Travel Queries** feature is implemented, the compaction process needs to be smarter. Instead of just keeping the final state, it must also **preserve historical versions** of objects that fall within the database's configured retention period.
+
+1.  **Read & Replay:** Reads the log segment and replays history, similar to standard compaction.
+2.  **Identify Preserved Versions:** As it replays, it identifies all object states (snapshots) whose timestamps fall within the retention window (e.g., "keep history for 30 days").
+3.  **Write New Log with History:** It writes a new log file containing `INSERT` operations for the final state *and* for all the preserved historical snapshots. A log file might now contain multiple `INSERT` records for the same primary key, each representing the object's state at a different point in time (distinguished by their timestamp).
+4.  **Atomic Swap:** Atomically replaces the old file with the new one.
+
+*Example (with 30-day retention):*
+* **Before:** `INSERT(A, v1, ts=Day1)`, `UPDATE(A, v2, ts=Day5)`, `DELETE(B, ts=Day6)`
+* **After (if Day1 and Day5 are within 30 days):** `INSERT(A, v1, ts=Day1)`, `INSERT(A, v2, ts=Day5)`
+
+## Triggering Compaction
+
+In `yourdb`, compaction is automatically triggered for a specific log file partition when a certain number of write operations (`COMPACTION_THRESHOLD` in `entity.py`) have occurred on that partition since the last compaction.
+
+Compaction is a crucial background process that ensures `yourdb` remains efficient and performs well over time.

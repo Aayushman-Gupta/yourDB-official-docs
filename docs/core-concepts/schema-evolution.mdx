@@ -1,0 +1,54 @@
+---
+title: Schema Evolution
+sidebar_label: Schema Evolution
+---
+
+# Schema Evolution (The Hybrid Model)
+
+Applications evolve, and so does their data structure (schema). Managing these changes in traditional databases often involves complex, risky, and downtime-inducing migration scripts (`ALTER TABLE`, etc.). `yourdb` tackles this challenge with a modern, developer-friendly **Hybrid Schema Evolution** model.
+
+This model combines the seamless flexibility of **Lazy Read Evolution** with the optional performance benefits of **Eager Migration**.
+
+## 1. Lazy Read Evolution (Default) 🧬
+
+This is the primary mechanism and prioritizes developer experience and application uptime.
+
+* **The Concept:** Your application code always defines the *latest* version of your data classes (e.g., `User v3`). When `yourdb` reads older data (e.g., a `User v1` object) from the disk, it **automatically upgrades it in memory** to the latest version before your application code ever sees it.
+* **How it Works:**
+    * You define versions using `__version__` in your registered classes (`@register_class`).
+    * You write simple, pure Python functions (`@register_upgrade`) that teach `yourdb` how to transform data from one version to the next (e.g., v1 -> v2, v2 -> v3).
+    * The `yourdb_decoder` (used during reads) detects old versions and automatically chains the necessary upgrade functions together in real-time.
+* **Advantages:**
+    * **Zero Downtime:** Schema changes only require deploying new application code. The database handles the rest.
+    * **No Migration Scripts:** Eliminates a major source of bugs and operational complexity.
+    * **Flexibility:** Easily add, remove, or refactor fields in your classes.
+* **Trade-off:**
+    * **Read Performance:** A small performance cost is incurred during reads when data needs upgrading.
+    * **Disk Inconsistency:** The physical log files will contain a mix of objects from different historical schema versions.
+
+Lazy evolution is the default behavior. Your application always interacts with a perfectly consistent, up-to-date view of the data, regardless of the underlying historical variations on disk.
+
+## 2. Eager Migration (Optional Tool) 🛠️
+
+This is an optional "housekeeping" tool designed for optimization and consistency of the physical data files.
+
+* **The Concept:** You manually trigger a process (e.g., `db.optimize_entity()`) that reads *all* data for an entity, applies all necessary upgrades, and writes brand new, clean log files containing **only the latest version** of all objects.
+* **How it Works:** It uses a safe, "blue-green" approach:
+    1.  Reads all existing data (upgrading it in memory using the same lazy-read logic).
+    2.  Writes the fully upgraded objects to temporary new log files.
+    3.  Only upon successful completion, it **atomically swaps** the old log files with the new ones (`os.replace`).
+* **Advantages:**
+    * **Improved Read Performance:** Eliminates the need for on-the-fly upgrades for future reads.
+    * **Disk Consistency:** Ensures all physical data conforms to the latest schema.
+    * **Safety:** The atomic swap guarantees that the database remains consistent even if the optimization process fails midway.
+* **Trade-off:**
+    * **Requires Offline/Maintenance Window:** While the process is safe, it's typically run during periods of low activity or as part of a deployment process, as it involves significant I/O.
+
+## The Hybrid Advantage
+
+`yourdb`'s hybrid model provides the best of both worlds:
+
+* Enjoy the effortless flexibility of lazy reads during everyday development.
+* Optionally run the safe, eager migration tool periodically to clean up historical data and optimize read performance.
+
+This approach makes managing schema changes a significantly less daunting task compared to traditional database workflows.

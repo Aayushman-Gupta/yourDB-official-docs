@@ -1,0 +1,38 @@
+# Concurrency Control
+
+`yourdb` is designed to be **thread-safe** out of the box, allowing multiple threads within your Python application to read and write data concurrently without causing corruption or inconsistencies. This is achieved using a **Reader-Writer Lock** with a **Writer-Preference** policy.
+
+## The Challenge: Race Conditions
+
+When multiple threads try to access and modify the same data simultaneously, **race conditions** can occur. Imagine two threads trying to update the same user record at the exact same time. Without proper locking:
+
+* One update might completely overwrite the other, leading to lost data.
+* Internal data structures (like the in-memory cache or indexes) could become corrupted if two threads modify them simultaneously.
+* Log files could become corrupted if two threads try writing to the same file position.
+
+## The Solution: Reader-Writer Lock (RWLock)
+
+`yourdb` uses a sophisticated `RWLock` (`yourdb/locking.py`) to manage access to each `Entity`. This type of lock allows for greater concurrency than a simple mutex by distinguishing between read and write operations:
+
+* **Multiple Readers Allowed:** Any number of threads can hold a **read lock** simultaneously. Reading data doesn't interfere with other reads.
+* **Exclusive Writer:** Only **one** thread can hold the **write lock** at any given time. Furthermore, if a thread holds the write lock, no other threads (readers or writers) can acquire any lock until the writer releases it. This ensures that modifications happen atomically and safely.
+
+## Writer Preference
+
+The specific implementation in `yourdb` uses a **Writer-Preference** policy. This means:
+
+1.  If one or more threads are waiting to acquire the **write lock**, any *new* threads trying to acquire a **read lock** will be blocked.
+2.  The waiting writer(s) get priority. They will acquire the lock as soon as the current lock holder (whether it's readers or another writer) releases it.
+3.  New readers are only allowed in once the queue of waiting writers is empty.
+
+**Why Writer Preference?**
+This policy prevents **writer starvation**. In a reader-preference system, a continuous stream of incoming readers could potentially block a writer indefinitely. Writer preference ensures that critical updates (`insert`, `update`, `delete`) are processed promptly, prioritizing data freshness and integrity over maximum read throughput. While it can theoretically lead to reader starvation, this is less common in practice due to the typically short duration of write operations in `yourdb`.
+
+## Implementation Details
+
+* Each `Entity` instance has its own independent `RWLock`. Operations on different entities do not block each other.
+* All public methods that modify data (`insert`, `update`, `delete`) acquire the **write lock**.
+* The public method for reading data (`get_data`) acquires the **read lock**.
+* Internal helper methods (like `_get_data_unlocked`) are used within write-locked sections to avoid deadlocks (where a thread tries to acquire a lock it already holds).
+
+This robust concurrency control makes `yourdb` suitable for use in multi-threaded Python applications where different parts of the application might need to access the database concurrently.  

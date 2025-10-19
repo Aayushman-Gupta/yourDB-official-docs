@@ -22,7 +22,7 @@ const sidebars = {
       items: [
         'getting-started/installation',
         'getting-started/quick-start',
-         
+
       ],
     },
     {
@@ -43,7 +43,7 @@ const sidebars = {
         'core-concepts/concurrency',
         'core-concepts/compaction',
         'core-concepts/schema-evolution',
-        // Add 'core-concepts/time-travel' later
+        'core-concepts/time-travel'
       ],
     },
     {

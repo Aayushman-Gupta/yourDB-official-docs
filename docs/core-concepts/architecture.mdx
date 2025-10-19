@@ -1,0 +1,47 @@
+
+# Architecture
+
+`yourdb` is designed with a simple yet powerful architecture based on two core principles: a **log-structured file system** for durability and an **in-memory cache** for high performance.
+
+## 1. Log-Structured Storage (Append-Only Log) 🪵
+
+Unlike traditional databases that often modify data files in place, `yourdb` uses an **append-only log** for all write operations (`insert`, `update`, `delete`).
+
+* **How it Works:** Every change is recorded as a new entry at the *end* of a log file.
+    * `INSERT`: Writes the full object data.
+    * `UPDATE`: Writes only the changed fields and the primary key.
+    * `DELETE`: Writes the primary key of the object to be removed.
+* **Advantages:**
+    * **⚡ Blazing Fast Writes:** Appending to a file is extremely fast, typically much faster than modifying data in the middle of a large file. Write performance remains constant regardless of database size.
+    * **🛡️ Durability & Crash Safety:** Since existing data is never overwritten, the database files cannot be corrupted if the application crashes mid-write. The worst case is an incomplete command at the very end of the log, which is simply ignored on the next startup.
+    * **⏳ Built-in History:** The log naturally contains the entire history of every object, enabling features like Time-Travel Queries.
+
+* **Data Partitioning:** To prevent log files from becoming infinitely large and to allow for some parallelism, data is partitioned (sharded) across multiple log files based on a hash of the primary key.
+
+## 2. In-Memory Cache & Indexes 🧠
+
+While the log provides durability, reading it repeatedly for every query would be slow. `yourdb` achieves high read performance by maintaining an **in-memory representation** of the latest state of the data.
+
+* **How it Works:** When `yourdb` starts up (or when an `Entity` is first accessed):
+    1.  It reads the relevant log files from beginning to end.
+    2.  It replays the sequence of `INSERT`, `UPDATE`, and `DELETE` operations.
+    3.  It builds Python dictionaries (`self.data` and `self.indexes`) in RAM that store the *final, current state* of each object and any defined indexes.
+* **Advantages:**
+    * **🚀 Lightning Fast Reads:** All `select_from` queries operate directly on these in-memory Python dictionaries, making lookups incredibly fast (approaching native Python dictionary access speed).
+    * **Simplified Querying:** Filtering and index lookups are performed using standard Python logic.
+* **Trade-offs:**
+    * **Startup Time:** Initial loading involves reading log files, which can take time for very large datasets. Compaction helps mitigate this.
+    * **Memory Usage:** The entire active dataset must fit into available RAM. `yourdb` is best suited for datasets that can comfortably reside in memory.
+
+## 3. Compaction 🧹
+
+Over time, the append-only logs accumulate redundant data (old versions of updated objects, records for deleted objects). The **compaction** process cleans this up.
+
+* **How it Works:** Periodically (or manually triggered), a compactor reads a log file, calculates the final state of each object within it (potentially preserving history for time-travel), and writes a new, clean log file containing only the necessary data. It then atomically replaces the old log file with the new one.
+* **Advantages:**
+    * **Reduced Storage:** Keeps disk usage efficient.
+    * **Faster Startup:** Reduces the amount of data that needs to be read and replayed when the database starts.
+
+## Summary
+
+`yourdb`'s architecture combines the write performance and durability of log-structured storage with the read performance of an in-memory database, offering a unique blend suitable for many modern Python applications.

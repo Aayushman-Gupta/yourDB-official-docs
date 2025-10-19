@@ -1,0 +1,33 @@
+---
+title: Time-Travel Queries (Coming Soon)
+sidebar_label: Time-Travel
+---
+
+# Time-Travel Queries (Coming Soon) ⏳
+
+One of the powerful capabilities enabled by `yourdb`'s log-structured architecture is the potential for **Time-Travel Queries**. This feature would allow you to query the state of your data as it existed at any specific point in the past.
+
+## The Vision
+
+Imagine being able to ask your database:
+
+* "What was this user's profile information last Tuesday at 3:15 PM?"
+* "Show me the inventory count for this product before the big sale started."
+* "What did this configuration object look like before the last deployment?"
+
+## How it Works (Concept)
+
+Because `yourdb` records every change (`INSERT`, `UPDATE`, `DELETE`) with a timestamp in its append-only log, the entire history of your data is preserved (at least until compaction).
+
+A time-travel query would involve:
+
+1.  **Specifying a Timestamp:** You would provide an `as_of_timestamp` parameter in your `select_from` query.
+2.  **Replaying History:** The query engine would read the relevant log entries for an object.
+3.  **Stopping at the Timestamp:** It would apply the changes (`INSERT`, `UPDATE`, `DELETE`) in order but would *stop* processing any log entries dated *after* your specified `as_of_timestamp`.
+4.  **Returning the Historical State:** The result would be the object as it existed exactly at that point in the past.
+
+## Current Status
+
+This feature is currently **under development**. The key challenge involves implementing a "Smart Compaction" process that preserves historical data within a configurable retention period, rather than discarding it.
+
+Stay tuned for updates on this exciting feature!
