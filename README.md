@@ -2,7 +2,7 @@
 
 This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
 
-[![Vercel Deployment Status](https://vercel-badge-rho.vercel.app/?url=https%3A%2F%2Fvercel.com%2Faayushman-guptas-projects%2Fyour-db-official-docs)](https://your-db-official-docs.vercel.app/)
+[![Vercel Deployment Status](https://your-db-official-docs.vercel.app/)](https://your-db-official-docs.vercel.app/)
 
 This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
 
