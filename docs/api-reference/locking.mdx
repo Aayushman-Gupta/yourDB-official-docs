@@ -1,0 +1,36 @@
+---
+title: Locking API (RWLock)
+sidebar_label: Locking API
+---
+
+# API Reference: RWLock Class
+
+The `RWLock` class (`yourdb/locking.py`) provides the thread-safety mechanism for `yourdb`. It implements a **Reader-Writer Lock** with a **Writer-Preference** policy.
+
+You generally don't interact with this class directly, as it's used internally by the `Entity` class.
+
+## Purpose
+
+To prevent race conditions and data corruption when multiple threads access the same `Entity` concurrently.
+
+## Policy: Writer Preference
+
+* **Multiple Readers:** Allows many threads to read simultaneously.
+* **Exclusive Writer:** Only one thread can write at a time.
+* **Writer Priority:** If any thread is waiting to write, new readers are blocked until all waiting writers have finished. This prevents writer starvation.
+
+## Key Methods (Internal Use)
+
+* **`acquire_read()`**: Acquires a read lock. Blocks if writers are waiting or active.
+* **`release_read()`**: Releases a read lock. Notifies waiting writers if this was the last reader.
+* **`acquire_write()`**: Acquires the exclusive write lock. Blocks if any readers or another writer is active. Increments the waiting writers count.
+* **`release_write()`**: Releases the write lock. Decrements the waiting writers count. Notifies other waiting writers first, then waiting readers if no writers are left.
+
+## Context Managers (Used by `Entity`)
+
+The `Entity` class uses context managers provided by `RWLock` for cleaner code:
+
+* **`with self.lock.read(): ...`**: Acquires a read lock on entry, releases it on exit.
+* **`with self.lock.write(): ...`**: Acquires a write lock on entry, releases it on exit.
+
+Understanding the `RWLock` helps clarify how `yourdb` ensures safe concurrent operations.

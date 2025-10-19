@@ -1,0 +1,44 @@
+---
+title: Basic CRUD Operations
+sidebar_label: Basic CRUD
+---
+
+# Basic CRUD Operations
+
+This tutorial covers the fundamental Create, Read, Update, and Delete (CRUD) operations in `yourdb`. We'll use a simple `Product` class as an example.
+
+## Setup
+
+First, let's define our data model and set up the database entity.
+
+```python
+from yourdb import YourDB, register_class
+
+# 1. Define the data model
+@register_class
+class Product:
+    __version__ = 1
+    def __init__(self, name, price, category):
+        self.product_id = None # Primary key, set during insert
+        self.name = name
+        self.price = price
+        self.category = category
+
+    def __repr__(self):
+        return f"Product(id={self.product_id}, name='{self.name}', price=${self.price}, cat='{self.category}')"
+
+# 2. Initialize the database
+db = YourDB("inventory_db")
+
+# 3. Define the schema
+product_schema = {
+    'primary_key': 'product_id',
+    'product_id': "int",
+    'name': "str",
+    'price': "int",
+    'category': "str",
+    'indexes': ['category'] # Add an index for faster category lookups
+}
+
+# 4. Create the entity (like a table)
+db.create_entity("products", product_schema)
