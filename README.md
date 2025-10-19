@@ -2,6 +2,12 @@
 
 This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
 
+[![Vercel Deployment Status](https://vercel-badge-rho.vercel.app/?url=https%3A%2F%2Fvercel.com%2Faayushman-guptas-projects%2Fyour-db-official-docs)](https://vercel.com/aayushman-guptas-projects/your-db-official-docs)
+
+This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
+
+**➡️ View the live documentation site deployed on Vercel:** [https://vercel.com/aayushman-guptas-projects/your-db-official-docs](https://vercel.com/aayushman-guptas-projects/your-db-official-docs)
+
 ## 🚀 Getting Started Locally
 
 To run this documentation site on your local machine:
