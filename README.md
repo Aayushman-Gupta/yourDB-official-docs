@@ -6,7 +6,7 @@ This repository contains the source code for the official documentation website 
 
 This repository contains the source code for the official documentation website of the `yourdb` project, built using [Docusaurus](https://docusaurus.io/).
 
-**➡️ View the live documentation site deployed on Vercel:** [https://vercel.com/aayushman-guptas-projects/your-db-official-docs](https://vercel.com/aayushman-guptas-projects/your-db-official-docs)
+**➡️ View the live documentation site deployed on Vercel:** [https://vercel.com/aayushman-guptas-projects/your-db-official-docs](https://your-db-official-docs.vercel.app/)
 
 ## 🚀 Getting Started Locally
 
