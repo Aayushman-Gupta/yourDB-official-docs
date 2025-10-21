@@ -12,7 +12,7 @@ const config = {
   favicon: 'img/yourdb.ico',
 
   // Set the production/development organization and project names
-  organizationName: 'your-github-username', // Your GitHub username
+  organizationName: 'Aayushman-Gupta', // Your GitHub username
   projectName: 'yourdb-documentation', // Your GitHub repo name
 
   onBrokenLinks: 'throw',
@@ -57,7 +57,7 @@ const config = {
           },
           // You should add your GitHub repo link here:
           {
-            href: 'https://github.com/Aayushman-gupta/yourdb',
+            href: 'https://github.com/Dhruv251004/yourdb',
             label: 'GitHub',
             position: 'right',
           },
