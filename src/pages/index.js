@@ -10,36 +10,49 @@ function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <img src="/img/logo.png" alt="yourdb Logo" className={styles.heroLogo} />
-        <h1 className="hero__title">{siteConfig.title}</h1>
-        <p className={styles.heroSubtitle}>The Intelligent Python Database</p>
-        <p className={styles.heroTagline}>Persist complex Python objects directly, without the boilerplate.</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/getting-started/quick-start">
-            Get Started (5min) ⏱️
-          </Link>
-          <Link
-            className={clsx('button button--outline button--secondary button--lg', styles.githubButton)}
-            to={siteConfig.themeConfig.navbar.items.find(item => item.label === 'GitHub')?.href || '#'}>
-            View on GitHub <span aria-label="star" role="img">⭐</span>
-          </Link>
-        </div>
+      <div className={clsx('container', styles.heroContainer)}> {/* Use container for padding */}
+        <div className="row"> {/* Use Docusaurus row for columns */}
+          {/* Left Column: Text and Buttons */}
+          <div className={clsx('col col--7', styles.heroTextColumn)}> {/* Takes up more space */}
+            <h1 className={styles.heroTitle}>{siteConfig.title}</h1>
+            <p className={styles.heroSubtitle}>The Intelligent Python Database</p>
+            <p className={styles.heroTagline}>
+              Persist complex Python objects directly, without the boilerplate.
+              Built with performance, concurrency, and developer experience in mind.
+            </p>
+            <div className={styles.buttons}>
+              <Link
+                className="button button--secondary button--lg"
+                to="/docs/getting-started/quick-start">
+                Get Started (5min) ⏱️
+              </Link>
+              <Link
+                className={clsx('button button--outline button--secondary button--lg', styles.githubButton)}
+                to={siteConfig.themeConfig.navbar.items.find(item => item.label === 'GitHub')?.href || '#'}>
+                View on GitHub <span aria-label="star" role="img">⭐</span>
+              </Link>
+            </div>
+            <p className={styles.pypiLinkContainer}>
+              <Link
+                href="https://pypi.org/project/yourdb/" // <-- Your PyPI Link
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.pypiLink}
+              >
+                📦 Available on PyPI
+              </Link>
+            </p>
+          </div>
 
-        <p className={styles.pypiLinkContainer}>
-          <Link
-            href="https://pypi.org/project/yourdb/" // <-- Your PyPI Link
-            target="_blank" // Open in new tab
-            rel="noopener noreferrer" // Security best practice
-            className={styles.pypiLink}
-          >
-            📦 Available on PyPI
-          </Link>
-          {/* You can add a version badge here later if you want */}
-        </p>
-        
+          {/* Right Column: Logo */}
+          <div className={clsx('col col--5', styles.heroImageColumn)}> {/* Takes up remaining space */}
+            <img
+              src="/img/logo_yourdb.png" // Path relative to static folder
+              alt="yourdb Logo"
+              className={styles.heroLogo}
+            />
+          </div>
+        </div>
       </div>
     </header>
   );

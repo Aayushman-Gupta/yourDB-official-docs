@@ -46,7 +46,7 @@ const config = {
         title: 'yourdb',
         logo: {
           alt: 'yourdb Logo',
-          src: 'img/logo.png',
+          src: 'img/logo_yourdb.png',
         },
         items: [
           {
